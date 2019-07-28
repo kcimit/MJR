@@ -5,8 +5,24 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MJR"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="Extract JPEG files from MotionJPEG container (.MOV .DAT)" Height="450" Width="800">
     <Grid>
-        
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="120"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="130"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="130"/>
+        </Grid.ColumnDefinitions>
+        <TextBox Margin="5" Grid.Row="1"/>
+        <TextBox Grid.Column="2" Margin="5" Grid.Row="1"/>
+        <Button Content="Select file" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" Margin="5" VerticalAlignment="Center" Width="120" Click="ButtonSelectFile"/>
+        <Button Content="Output folder" Grid.Row="1" Grid.Column="3" HorizontalAlignment="Left" Margin="5" VerticalAlignment="Center" Width="120" Click="ButtonOutputFolder"/>
+        <Button Content="Start" Grid.Row="2" HorizontalAlignment="Left" Margin="5" VerticalAlignment="Center" Width="120" Click="ButtonBase_OnClick"/>
     </Grid>
 </Window>
