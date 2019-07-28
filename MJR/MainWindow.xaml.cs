@@ -1,18 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace MJR
 {
@@ -21,116 +11,82 @@ namespace MJR
     /// </summary>
     public partial class MainWindow : Window
     {
+        ViewModel vm;
         public MainWindow()
         {
             InitializeComponent();
+            vm = new ViewModel();
+            vm.MaxJPEGSize = 20*1024;
+            DataContext = vm;
         }
 
         private void ButtonBase_OnClick(object sender, RoutedEventArgs e)
         {
-            int fcount = 0;
-            bool stFl1 = false;
-            bool stFl2 = false;
-            bool wrFl = false;
-            bool endFl = false;
-            var writePos = 0;
-            int curPos = 0;
-            var writeBufferLength = 20000000;
-            byte[] buffer = new byte[512000];
-            byte[] dataArray = new byte[writeBufferLength];
-            using (BinaryReader reader = new BinaryReader(File.Open(@"c:\2\test.dat", FileMode.Open)))
+            int fcount=0;
+            if (!File.Exists(vm.InputFile))
             {
-                int bytesRead;
-                while ((bytesRead = reader.Read(buffer, 0, buffer.Length)) > 0)
+                MessageBox.Show("Cannot find input file", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            if (!Directory.Exists(vm.OutputFolder))
+            {
+                var res = MessageBox.Show($"Directory {vm.OutputFolder} does not exists. Do you want to create it?", "Error", MessageBoxButton.YesNoCancel, MessageBoxImage.Error);
+                if (res == MessageBoxResult.Cancel) return;
+                if (res == MessageBoxResult.No) return;
+                try
                 {
-                    curPos = 0;
-                    while (curPos < bytesRead)
-                    {
-                        if (writePos == writeBufferLength && wrFl)
-                        {
-                            using (FileStream writeStream =
-                                new FileStream($"c:\\2\\test{fcount++}.jpeg", FileMode.Create))
-                            {
-                                BinaryWriter bw = new BinaryWriter(writeStream);
-                                bw.Write(dataArray, 0, writePos);
-                            }
-
-                            wrFl = false;
-                            endFl = false;
-                        }
-
-                        var read = buffer[curPos++];
-                        if (read == 0xFF && !stFl2 && !wrFl)
-                        {
-                            stFl1 = true;
-                            continue;
-                        }
-
-                        if (read == 0xD8 && stFl1 && !stFl2 && !wrFl)
-                        {
-                            stFl2 = true;
-                            continue;
-                        }
-
-                        if (read == 0xFF && stFl2 && !wrFl)
-                        {
-                            wrFl = true;
-                            dataArray = new byte[writeBufferLength];
-                            writePos = 3;
-                            dataArray[0] = 0xFF; dataArray[1] = 0xD8; dataArray[2] = 0xFF;
-
-                            stFl1 = false;
-                            stFl2 = false;
-                            continue;
-                        }
-
-                        if (wrFl && read == 0xFF)
-                        {
-                            endFl = true;
-                            dataArray[writePos++] = read;
-                            continue;
-                        }
-
-                        if (wrFl && endFl && read == 0xD9)
-                        {
-                            //write 
-                            wrFl = false;
-                            endFl = false;
-                            dataArray[writePos++] = read;
-
-                            using (FileStream writeStream =
-                                new FileStream($"c:\\2\\test{fcount++}.jpeg", FileMode.Create))
-                            {
-                                BinaryWriter bw = new BinaryWriter(writeStream);
-                                bw.Write(dataArray, 0, writePos);
-                            }
-                        }
-
-                        stFl1 = false;
-                        stFl2 = false;
-                        endFl = false;
-
-                        if (wrFl)
-                        {
-                            dataArray[writePos++] = read;
-                            continue;
-                        }
-                    }
+                    Directory.CreateDirectory(vm.OutputFolder);
+                }
+                catch (Exception exception)
+                {
+                    MessageBox.Show($"Cannot create folder {vm.OutputFolder}:\r\n{exception.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
                 }
             }
 
-            MessageBox.Show($"{fcount} Files written.");
+            if (vm.MaxJPEGSize <= 0)
+            {
+                MessageBox.Show($"Invalid value of JPEG file size {vm.MaxJPEGSize}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
 
+            vm.InputEnabled = false;
+            
+            Task tsk = Task.Factory.StartNew(() =>
+            {
+                fcount=Extract.ProcessExtract(vm);
+                return;
+            });
+            while (!tsk.IsCompleted)
+                Application.Current.Dispatcher.Invoke(DispatcherPriority.Background, new Action(delegate { }));
+            vm.InputEnabled = true;
+
+            if (fcount>0) MessageBox.Show($"{fcount} Files written.");
         }
-
+        
         private void ButtonSelectFile(object sender, RoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
+
+            dlg.DefaultExt = ".mov";
+            dlg.Filter = "QT files (*.mov)|*.mov|DAT files (*.dat)|*.dat|All files (*.*)|*.*";
+
+            // Display OpenFileDialog by calling ShowDialog method 
+            Nullable<bool> result = dlg.ShowDialog();
+            if (result==true)
+                vm.InputFile = dlg.FileName;
         }
 
         private void ButtonOutputFolder(object sender, RoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            using (var dialog = new System.Windows.Forms.FolderBrowserDialog())
+            {
+                if (!string.IsNullOrEmpty(vm.OutputFolder)) dialog.SelectedPath = vm.OutputFolder;
+                var result = dialog.ShowDialog();
+                if (result == System.Windows.Forms.DialogResult.OK)
+                    vm.OutputFolder = dialog.SelectedPath;
+            }
         }
     }
 }

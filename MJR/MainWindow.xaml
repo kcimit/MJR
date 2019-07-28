@@ -10,7 +10,8 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="40"/>
             <RowDefinition Height="40"/>
-            <RowDefinition Height="120"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="40"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -19,10 +20,41 @@
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="130"/>
         </Grid.ColumnDefinitions>
-        <TextBox Margin="5" Grid.Row="1"/>
-        <TextBox Grid.Column="2" Margin="5" Grid.Row="1"/>
-        <Button Content="Select file" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" Margin="5" VerticalAlignment="Center" Width="120" Click="ButtonSelectFile"/>
-        <Button Content="Output folder" Grid.Row="1" Grid.Column="3" HorizontalAlignment="Left" Margin="5" VerticalAlignment="Center" Width="120" Click="ButtonOutputFolder"/>
-        <Button Content="Start" Grid.Row="2" HorizontalAlignment="Left" Margin="5" VerticalAlignment="Center" Width="120" Click="ButtonBase_OnClick"/>
+        <TextBox Margin="5" Grid.Row="1" Text="{Binding Path=InputFile}" IsEnabled="{Binding Path=InputEnabled}"/>
+        <TextBox Grid.Column="2" Margin="5" Grid.Row="1" Text="{Binding Path=OutputFolder}" IsEnabled="{Binding Path=InputEnabled}"/>
+        <DockPanel Grid.Row="2" IsEnabled="{Binding Path=InputEnabled}">
+            <Label VerticalAlignment="Center">JPEG size limit (kB)</Label>
+            <TextBox Margin="5" Text="{Binding Path=MaxJPEGSize}"/>
+        </DockPanel>
+        <Button Content="Select file" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" Margin="5" VerticalAlignment="Center" Width="120" Click="ButtonSelectFile" IsEnabled="{Binding Path=InputEnabled}"/>
+        <Button Content="Output folder" Grid.Row="1" Grid.Column="3" HorizontalAlignment="Left" Margin="5" VerticalAlignment="Center" Width="120" Click="ButtonOutputFolder" IsEnabled="{Binding Path=InputEnabled}"/>
+        <Button Content="Start" Grid.Row="3" HorizontalAlignment="Left" Margin="5" VerticalAlignment="Center" Width="120" Click="ButtonBase_OnClick" IsEnabled="{Binding Path=InputEnabled}"/>
+        <ListView Grid.Row="4" Grid.ColumnSpan="4" Margin="5" ItemsSource="{Binding Path=FileProgress}">
+            <ListView.View>
+                <GridView>
+                    <GridView.ColumnHeaderContainerStyle>
+                        <Style TargetType="{x:Type GridViewColumnHeader}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </Style>
+                    </GridView.ColumnHeaderContainerStyle>
+                    <GridViewColumn>
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Margin="10,0,0,0" Width="500" TextWrapping="Wrap" Text="{Binding Text}" FontWeight="{Binding Weight}">
+                                        <TextBlock.Background>
+                                            <SolidColorBrush Color="{Binding BackgroundColor}"/>
+                                        </TextBlock.Background>
+                                        <TextBlock.Foreground>
+                                            <SolidColorBrush Color="{Binding ForegroundColor}"/>
+                                        </TextBlock.Foreground>
+                                    </TextBlock>
+                                </StackPanel>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                </GridView>
+            </ListView.View>
+        </ListView>
     </Grid>
 </Window>
